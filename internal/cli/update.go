@@ -118,7 +118,7 @@ func (c *CLI) Update(ctx context.Context, args []string, logger UpdaterLogger) e
 		Dial:     dnsDialer.Dial,
 	}
 
-	const clientTimeout = 10 * time.Second
+	const clientTimeout = 180 * time.Second
 	httpClient := &http.Client{Timeout: clientTimeout}
 	unzipper := unzip.New(httpClient)
 	parallelResolver := resolver.NewParallelResolver(dnsDialer)

@@ -4,7 +4,7 @@ ARG GO_VERSION=1.26
 ARG XCPUTRANSLATE_VERSION=v0.9.0
 ARG GOLANGCI_LINT_VERSION=v2.11.4
 ARG MOCKGEN_VERSION=v0.6.0
-ARG BUILDPLATFORM=linux/amd64
+ARG BUILDPLATFORM=linux/arm64
 
 FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPUTRANSLATE_VERSION} AS xcputranslate
 FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/binpot:golangci-lint-${GOLANGCI_LINT_VERSION} AS golangci-lint
@@ -13,12 +13,14 @@ FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/binpot:mockgen-${MOCKGEN_VERSION}
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${GO_ALPINE_VERSION} AS base
 COPY --from=xcputranslate /xcputranslate /usr/local/bin/xcputranslate
 # Note: findutils needed to have xargs support `-d` flag for mocks stage.
-RUN apk --update add git g++ findutils iptables
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk --update add git g++ findutils iptables
 ENV CGO_ENABLED=0
 COPY --from=golangci-lint /bin /go/bin/golangci-lint
 COPY --from=mockgen /bin /go/bin/mockgen
 WORKDIR /tmp/gobuild
 COPY go.mod go.sum ./
+RUN go env -w GOPROXY=https://goproxy.cn,direct
 RUN go mod download
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
@@ -287,8 +289,8 @@ EXPOSE 8000/tcp 8888/tcp 8388/tcp 8388/udp 1080/tcp 1080/udp
 HEALTHCHECK --interval=5s --timeout=5s --start-period=10s --retries=3 CMD /gluetun-entrypoint healthcheck
 ARG TARGETPLATFORM
 RUN apk add --no-cache --update -l wget && \
-    apk add --no-cache --update -X "https://dl-cdn.alpinelinux.org/alpine/v3.17/main" openvpn\~2.5 && \
-    mv /usr/sbin/openvpn /usr/sbin/openvpn2.5 && \
+    apk add --no-cache --update -X "https://dl-cdn.alpinelinux.org/alpine/v3.17/main" openvpn\~2.6 && \
+    mv /usr/sbin/openvpn /usr/sbin/openvpn2.6 && \
     apk del openvpn && \
     apk add --no-cache --update openvpn ca-certificates iptables iptables-legacy tzdata && \
     mv /usr/sbin/openvpn /usr/sbin/openvpn2.6 && \

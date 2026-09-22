@@ -299,7 +299,7 @@ func (c *Checker) startupCheck(ctx context.Context) error {
 	// may be multiple, we run the check in parallel. If any succeeds, the check passes.
 	// This is to prevent false negatives at startup, if one of the addresses is down
 	// for external reasons.
-	const timeout = 6 * time.Second
+	const timeout = 30 * time.Second
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	errCh := make(chan error)
